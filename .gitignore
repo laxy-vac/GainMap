@@ -1,0 +1,25 @@
+# Local build environment and intermediate output
+.venv*/
+.work-ui/
+.work-publish/
+__pycache__/
+*.py[cod]
+*.spec
+build/
+dist/
+
+# Distribute compiled apps separately from source history
+/GainMap.exe
+/release/
+
+# Local images and validation output
+*.jxr
+validation-output/
+.hdrjxr_converter_config.json
+
+# Editor and OS files
+.vs/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini
