@@ -1,11 +1,11 @@
 # GainMap 编译环境与构建说明
 
-整理日期：2026-10-04。此文档记录已经成功构建的环境；清理后不保留虚拟环境、下载包或中间产物。
+最初整理日期：2026-10-04；开源发布更新：2026-10-15。此文档记录已经成功构建的环境；不保留虚拟环境、下载包或中间产物。
 
-清理后已在无 `.venv-hdr` 的情况下运行正式 EXE 的完整自检，真实转换、质量 95／60、队列和错误处理均通过。自检新生成的文件也已清理。正式应用文件保持不变：
+2026-10-04 清理后，旧版 EXE 在无 `.venv-hdr` 的情况下通过了真实 JXR 转换、质量 95／60、队列和错误处理检查。2026-10-15 发布版剔除了内嵌微软运行库并增加缺失提示，复用已有编码组件及 Windows C# 编译器完成重打包，没有恢复虚拟环境或安装软件。当前正式应用：
 
 ```text
-SHA-256: BBA77E850EEA282AA2A2FF6D2B60137D5F11E6D4471E8FF21D2003E10582BCC8
+SHA-256: 19BA5781C2527A1128D173C037A74CCAA33220F09CED1FE2D3E0ACE2C02A5A86
 ```
 
 ## 保留内容
@@ -25,6 +25,7 @@ SHA-256: BBA77E850EEA282AA2A2FF6D2B60137D5F11E6D4471E8FF21D2003E10582BCC8
 | `WorkerClient.cs` | 提取并复用内嵌编码进程，使用 UTF-8 JSON 通信 |
 | `GainMap.manifest` | 普通用户权限、高 DPI 支持 |
 | `gainmap_worker.py` | 编码进程入口；验证路径、覆盖许可与质量参数 |
+| `package_worker.py` | 使用标准库重组编码组件，剔除微软 DLL、重定向私有 MSVCP 导入并更新 NumPy 文件记录 |
 | `hdr_gainmap.py` | JXR 解码、色彩／亮度转换、Gain Map JPEG 编码与完整文件写入 |
 | `build_windows_exe_dragdrop.bat` | 构建内嵌编码组件及最终 WPF EXE；不自动安装软件 |
 | `requirements-hdr.txt` | 编码依赖版本 |
@@ -96,8 +97,9 @@ Python 命令应指向已验证的 3.12 x64 环境。构建脚本本身只检查
 构建过程：
 
 1. PyInstaller 将 `gainmap_worker.py` 和编码依赖打包为 `GainMapWorker.exe`。必须包含 `imagecodecs._shared`、`_shared_cython`、`_jpegxr`、`_ultrahdr` 隐藏模块。
-2. Windows C# 编译器编译四个 C# 源文件，并嵌入 XAML、PNG 图标、编码 EXE 及应用 manifest；Windows 图标由 ICO 提供。
-3. 最终生成 `release/GainMap.exe`，只需复制此单个文件即可分发。运行时无需项目虚拟环境、Python 安装或 hdrfix。
+2. `package_worker.py` 剔除 Microsoft VC/UCRT/API-set DLL，将 NumPy 两处私有 MSVCP 导入改为系统 `msvcp140.dll`，并更新 wheel 文件记录。只使用标准库，不下载运行库。
+3. Windows C# 编译器编译四个 C# 源文件，并嵌入 XAML、PNG 图标、处理后的编码 EXE 及应用 manifest；Windows 图标由 ICO 提供。
+4. 最终生成 `release/GainMap.exe`。运行时无需项目虚拟环境、Python 安装或 hdrfix，但系统需已有 Microsoft Visual C++ v14 x64 运行库；缺失或过旧时请自行从 [微软官方页面](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) 获取。软件不自动安装，也不再分发这些 DLL。分发 EXE 时应一并保留发布页的第三方许可证包。
 
 中间输出集中在 `.work-ui/worker-build`、`worker-dist`、`worker-spec`。复建会重新生成这些目录，发布时不包含它们。
 
@@ -115,6 +117,8 @@ Python 命令应指向已验证的 3.12 x64 环境。构建脚本本身只检查
 
 已验证：独立目录中的单文件运行、WPF/XAML 离屏布局、原生目录选择器接口、队列去重、真实 JXR 转换、无效输入反馈、同名输出冲突、默认 95 与可调 60 的端到端参数传递。未启动桌面自动操作来验证交互；桌面外观和文件选择由用户检查。尚未在另一台电脑上实测。
 
+2026-10-15 发布检查：重组后的 worker 不含微软 DLL（移除 48 项）；在生成的浮点 HDR JXR 上，质量 95／60 输出与旧 worker 逐字节相同，并通过 HDR 解码。实际 MSVCP／VCRUNTIME／UCRT 均从 `System32` 加载。新 EXE 的 9 项离屏自检全部通过。本次没有原始用户截图，使用生成样本检查重打包后的编码结果。
+
 复建后，可使用自己的本地 JXR 验证：
 
 ```powershell
@@ -128,3 +132,5 @@ Python 命令应指向已验证的 3.12 x64 环境。构建脚本本身只检查
 自检会在指定输出目录生成 JPEG、测试素材与 `frontend-test.json`，应与源码和发布目录分开存放，验证结束后可清理。
 
 This product includes Gain Map technology under license by Adobe.
+
+This software is based in part on the work of the Independent JPEG Group.

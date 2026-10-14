@@ -40,6 +40,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
+"%BUILD_PYTHON%" "%~dp0package_worker.py" ^
+  "%TASK_ROOT%\.work-ui\worker-dist\GainMapWorker.exe" ^
+  "%TASK_ROOT%\.work-ui\worker-dist\GainMapWorker-system-runtime.exe"
+if errorlevel 1 (
+    echo [ERROR] Failed to exclude Microsoft runtime DLLs from the release.
+    pause
+    exit /b 1
+)
+
 set "CS_COMPILER=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 set "CS_FRAMEWORK=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319"
 if not exist "%CS_COMPILER%" (
@@ -59,7 +68,7 @@ if not exist "%TASK_ROOT%\release" (
   "/win32manifest:%~dp0GainMap.manifest" ^
   "/resource:%~dp0GlassUi.xaml,GainMap.UI" ^
   "/resource:%~dp0assets\gainmap-app.png,GainMap.Icon" ^
-  "/resource:%TASK_ROOT%\.work-ui\worker-dist\GainMapWorker.exe,GainMap.Worker" ^
+  "/resource:%TASK_ROOT%\.work-ui\worker-dist\GainMapWorker-system-runtime.exe,GainMap.Worker" ^
   "/reference:%CS_FRAMEWORK%\WPF\PresentationFramework.dll" ^
   "/reference:%CS_FRAMEWORK%\WPF\PresentationCore.dll" ^
   "/reference:%CS_FRAMEWORK%\WPF\WindowsBase.dll" ^

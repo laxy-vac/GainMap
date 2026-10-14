@@ -3,6 +3,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Collections.Generic;
 using System.Web.Script.Serialization;
@@ -16,6 +17,25 @@ public sealed class WorkerResult
 
 public sealed class WorkerClient : IDisposable
 {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern IntPtr LoadLibraryEx(string path, IntPtr reserved, uint flags);
+    [DllImport("kernel32.dll")]
+    static extern bool FreeLibrary(IntPtr module);
+
+    static void EnsureSystemRuntime()
+    {
+        string system = Environment.GetFolderPath(Environment.SpecialFolder.System);
+        foreach (string name in new[] { "msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll", "ucrtbase.dll" })
+        {
+            string path = Path.Combine(system, name);
+            IntPtr module = File.Exists(path) ? LoadLibraryEx(path, IntPtr.Zero, 0x900) : IntPtr.Zero;
+            if (module == IntPtr.Zero)
+                throw new IOException("缺少或无法加载 Microsoft Visual C++ v14 x64 运行库（" + name + "）。\n" +
+                    "请从微软官网下载并安装最新 x64 运行库后重试：\nhttps://aka.ms/vc14/vc_redist.x64.exe");
+            FreeLibrary(module);
+        }
+    }
+
     readonly object gate = new object();
     readonly object errorGate = new object();
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
@@ -73,6 +93,7 @@ public sealed class WorkerClient : IDisposable
     {
         if (process != null && !process.HasExited) return;
         if (process != null) { process.Dispose(); process = null; }
+        EnsureSystemRuntime();
         string worker = ExtractWorker();
         ProcessStartInfo start = new ProcessStartInfo(worker) {
             UseShellExecute = false, CreateNoWindow = true,

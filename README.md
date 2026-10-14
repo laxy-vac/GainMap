@@ -22,7 +22,9 @@ Windows 原生 WPF 界面，浅色磨砂材质、连续曲率圆角。转换在�
 
 **[下载 GainMap.exe](https://github.com/laxy-vac/GainMap/releases/latest/download/GainMap.exe)** · [完整发布页与第三方许可证](https://github.com/laxy-vac/GainMap/releases/latest)
 
-下载后双击即可运行。分发该应用时，请同时保留发布页中的第三方许可证包。
+系统需要已安装 **Microsoft Visual C++ v14 x64 运行库**；缺失时程序会提示，请自行从 [微软官方页面](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) 获取。程序不自动安装运行库，也不随包分发微软 DLL。在已有运行库的电脑上，下载后双击即可运行。
+
+分发该应用时，请同时保留发布页中的第三方许可证包。
 
 1. 打开 `GainMap.exe`。
 2. 拖入 NVIDIA 的 HDR JXR 截图，或点击中央选择按钮。
@@ -48,7 +50,7 @@ python -m venv .venv-hdr
 & '.\Original Code\build_windows_exe_dragdrop.bat'
 ```
 
-结果为 `release/GainMap.exe`。构建脚本不会自动安装软件、修改全局 Python 或 PATH。完整版本清单、验证记录和架构说明见 [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md)。
+结果为 `release/GainMap.exe`。构建脚本会从编码组件中剔除微软运行库，将 NumPy 的私有 MSVCP 引用改为系统 DLL，并更新对应文件记录。脚本不会自动安装软件、修改全局 Python 或 PATH。完整版本清单、验证记录和架构说明见 [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md)。
 
 源码位于 [`Original Code/`](Original%20Code/)。GUI 由 C#／WPF 实现；Python 编码进程使用 NumPy、imagecodecs 和 libultrahdr，并通过 PyInstaller 打包后嵌入 GUI。
 
@@ -66,3 +68,5 @@ python -m venv .venv-hdr
 本项目原创源码按 [MIT](LICENSE) 发布。第三方依赖保留各自许可证，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。图标由 AI 生成。
 
 This product includes Gain Map technology under license by Adobe.
+
+This software is based in part on the work of the Independent JPEG Group.
